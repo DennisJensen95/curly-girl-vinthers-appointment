@@ -1,0 +1,42 @@
+name: CurlyGirl
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: python:3.10-slim
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Unit tests
+        working-directory: ./src
+        run: |
+          coverage run -m unittest discover
+          coverage report | grep "TOTAL" | read total_cov
+          COVERAGE=$(echo ${total_cov##* })
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+          echo "COLOR=$(python3 ./.github/utility/color_coverage.py $COVERAGE)" >> $GITHUB_ENV
+      - name: Create Coverage Badge
+        uses: schneegans/dynamic-badges-action@v1.1.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 2b7862c80c14d562c8659e1283543190
+          filename: curly-girl-coverage.json
+          label: Code coverage
+          message: ${{ env.COVERAGE }}%
+          color: ${{ env.COLOR }}
