@@ -13,7 +13,10 @@ class TestMain(unittest.TestCase):
         self.assertTrue(is_canellation_post)
 
     def test_identifying_negative_cancellation(self):
-        post_text = """Så er der nyhed fra innersense Du kan nu købe en Collection og spare 25% af normal prisen! Du får shampoo, Balsam, leave in og detox maske - alt du skal bruge for at komme i gang 😍"""
+        post_text = """Så er der nyhed fra innersense Du kan nu købe en
+                    Collection og spare 25% af normal prisen! Du får shampoo,
+                    Balsam, leave in og detox maske - alt du skal bruge for at
+                    komme i gang 😍"""
         is_canellation_post = identify_cancellation(post_text)
         self.assertFalse(is_canellation_post)
 

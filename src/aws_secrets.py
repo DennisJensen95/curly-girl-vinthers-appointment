@@ -56,5 +56,5 @@ def get_secret():
             secret = get_secret_value_response['SecretString']
             secret = json.loads(secret)
             return True, secret
-        
+
     return False, "Unable to get secret"

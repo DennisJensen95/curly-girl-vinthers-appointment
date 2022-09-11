@@ -1,5 +1,4 @@
 # Standard library
-from lib2to3.pgen2.token import OP
 from time import sleep
 import schedule
 
@@ -39,7 +38,7 @@ def click_only_essential_cookies(driver: webdriver):
     # Click on parent
     element.find_element(By.XPATH, "..").click()
 
-    log.debug(f"Clicked on the Only allow essential cookies button")
+    log.debug("Clicked on the Only allow essential cookies button")
 
 
 def extract_posts_from_page(driver: webdriver):
@@ -107,6 +106,8 @@ def main():
 
     schedule.every(1).minutes.do(
         check_if_any_cancellation, secrets, facebook_page)
+
+    check_if_any_cancellation(secrets, facebook_page)
 
     log.debug("Start the scheduler")
     while True:
