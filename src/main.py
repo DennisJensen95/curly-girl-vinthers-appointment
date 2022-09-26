@@ -31,14 +31,17 @@ def check_if_any_post_is_cancellation(post_texts: list):
 
 
 def click_only_essential_cookies(driver: webdriver):
-    # Fetch the button
-    element = driver.find_element(
-        By.XPATH, "//*[contains(text(), 'Only allow essential cookies')]")
+    try:
+        # Fetch the button
+        element = driver.find_element(
+            By.XPATH, "//*[contains(text(), 'Only allow essential cookies')]")
 
-    # Click on parent
-    element.find_element(By.XPATH, "..").click()
+        # Click on parent
+        element.find_element(By.XPATH, "..").click()
 
-    log.debug("Clicked on the Only allow essential cookies button")
+        log.debug("Clicked on the Only allow essential cookies button")
+    except:
+        log.debug("Not able to click on the button for only essential cookies.")
 
 
 def extract_posts_from_page(driver: webdriver):
@@ -49,6 +52,7 @@ def extract_posts_from_page(driver: webdriver):
             By.XPATH, "//*[@data-ad-preview='message']")
         log.debug("Found {} posts".format(len(elements)))
         for _, element in enumerate(elements):
+            log.debug(f"{element.text[:10]}...")
             post_texts.append(element.text)
 
     except Exception as e:
