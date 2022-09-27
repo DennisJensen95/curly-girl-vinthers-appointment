@@ -40,8 +40,8 @@ def click_only_essential_cookies(driver: webdriver):
         element.find_element(By.XPATH, "..").click()
 
         log.debug("Clicked on the Only allow essential cookies button")
-    except:
-        log.debug("Not able to click on the button for only essential cookies.")
+    except Exception as error:
+        log.debug(f"Not able to click on the button for only essential cookies. Error was {error}")
 
 
 def extract_posts_from_page(driver: webdriver):
@@ -115,7 +115,10 @@ def main():
 
     log.debug("Start the scheduler")
     while True:
-        schedule.run_pending()
+        try:
+            schedule.run_pending()
+        except Exception as error:
+            log.error(f"Error in the scheduler: {error}")
         sleep(1)
 
 
