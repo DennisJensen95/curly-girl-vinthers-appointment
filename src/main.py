@@ -41,7 +41,8 @@ def click_only_essential_cookies(driver: webdriver):
 
         log.debug("Clicked on the Only allow essential cookies button")
     except Exception as error:
-        log.debug(f"Not able to click on the button for only essential cookies. Error was {error}")
+        log.debug(
+            f"Not able to click on the button for only essential cookies. Error was {error}")
 
 
 def extract_posts_from_page(driver: webdriver):
@@ -80,11 +81,8 @@ def send_message_to_user(secrets: dict):
     log.debug(f"Twillio message unique identifer: {message.sid}")
 
 
-def check_if_any_cancellation(secrets: dict, facebook_page: str):
+def check_if_any_cancellation(secrets: dict, facebook_page: str, driver: webdriver):
     log.debug("Scrape the curly girl website")
-    options = Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options)
     driver.get(facebook_page)
     driver.implicitly_wait(5)
     sleep(3)
@@ -96,7 +94,6 @@ def check_if_any_cancellation(secrets: dict, facebook_page: str):
         send_message_to_user(secrets)
     else:
         log.info("Did not find a cancellation post - Do not notify the client")
-    driver.close()
 
 
 def main():
@@ -108,10 +105,14 @@ def main():
         log.error("Unable to get TWILIO secrets")
         return
 
-    schedule.every(1).minutes.do(
-        check_if_any_cancellation, secrets, facebook_page)
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options)
 
-    check_if_any_cancellation(secrets, facebook_page)
+    schedule.every(1).minutes.do(
+        check_if_any_cancellation, secrets, facebook_page, driver)
+
+    check_if_any_cancellation(secrets, facebook_page, driver)
 
     log.debug("Start the scheduler")
     while True:
