@@ -81,7 +81,11 @@ def send_message_to_user(secrets: dict):
     log.debug(f"Twillio message unique identifer: {message.sid}")
 
 
-def check_if_any_cancellation(secrets: dict, facebook_page: str, driver: webdriver):
+def check_if_any_cancellation(secrets: dict, facebook_page: str):
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options)
+
     log.debug("Scrape the curly girl website")
     driver.get(facebook_page)
     driver.implicitly_wait(5)
@@ -95,6 +99,9 @@ def check_if_any_cancellation(secrets: dict, facebook_page: str, driver: webdriv
     else:
         log.info("Did not find a cancellation post - Do not notify the client")
 
+    driver.close()
+    driver.quit()
+
 
 def main():
     facebook_page = "https://www.facebook.com/Vinthersklippekaelder"
@@ -105,14 +112,10 @@ def main():
         log.error("Unable to get TWILIO secrets")
         return
 
-    options = Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options)
-
     schedule.every(1).minutes.do(
-        check_if_any_cancellation, secrets, facebook_page, driver)
+        check_if_any_cancellation, secrets, facebook_page)
 
-    check_if_any_cancellation(secrets, facebook_page, driver)
+    check_if_any_cancellation(secrets, facebook_page)
 
     log.debug("Start the scheduler")
     while True:
