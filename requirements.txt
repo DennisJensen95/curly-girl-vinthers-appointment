@@ -4,3 +4,4 @@ selenium==4.4.*
 boto3==1.24.*
 schedule==1.1.*
 twilio==7.13.*
+pysondb==1.6.*

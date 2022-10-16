@@ -1,16 +1,19 @@
 # Standard library
 from time import sleep
 import schedule
+from datetime import datetime
 
 # Application libraries
 from logger.init_logger import getLogger
 from aws_secrets import get_secret
+import curly_db
 
 # Third party libraries
 from twilio.rest import Client
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
+import pysondb
 
 log = getLogger(__file__)
 
@@ -23,10 +26,17 @@ def identify_cancellation(post_text: str):
         return False
 
 
-def check_if_any_post_is_cancellation(post_texts: list):
+def check_if_any_post_is_cancellation(post_texts: list, db: pysondb.db.JsonDatabase):
     for post_text in post_texts:
         if identify_cancellation(post_text):
-            return True
+            post_id = curly_db.save_post(post_text=post_text, db=db)
+            time_stamp = curly_db.get_post_timestamp(post_id=post_id, db=db)
+            log.debug(
+                f"First message of the post was sent at: {time_stamp.strftime(curly_db.DATEFORMAT)}")
+            if not is_post_too_old(5, post_time=time_stamp):
+                return True
+            log.debug("Not notifying the client as the post was too old")
+            return False
     return False
 
 
@@ -63,6 +73,23 @@ def extract_posts_from_page(driver: webdriver):
     return post_texts
 
 
+def is_post_too_old(min_old_threshold: int, post_time: datetime):
+    """Check if the post is too old to be relevant
+
+    Args:
+        min_old_threshold (int, optional): The number of minutes the post can be old. Defaults to 10.
+
+    Returns:
+        bool: True if the post is too old
+    """
+    now = datetime.now()
+    time_difference = now - post_time
+    if time_difference.total_seconds() / 60 > min_old_threshold:
+        return True
+
+    return False
+
+
 def send_message_to_user(secrets: dict):
     account_sid = secrets["CURLY_TWILIO_ACCOUNT_SID"]
     auth_token = secrets["CURLY_TWILIO_AUTH_TOKEN"]
@@ -81,7 +108,7 @@ def send_message_to_user(secrets: dict):
     log.debug(f"Twillio message unique identifer: {message.sid}")
 
 
-def check_if_any_cancellation(secrets: dict, facebook_page: str):
+def check_if_any_cancellation(secrets: dict, facebook_page: str, db: pysondb.db.JsonDatabase):
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options)
@@ -93,7 +120,7 @@ def check_if_any_cancellation(secrets: dict, facebook_page: str):
     click_only_essential_cookies(driver)
     sleep(2)
     posts = extract_posts_from_page(driver)
-    if check_if_any_post_is_cancellation(posts):
+    if check_if_any_post_is_cancellation(posts, db):
         log.info("Found a cancellation post - Notify the client")
         send_message_to_user(secrets)
     else:
@@ -112,10 +139,13 @@ def main():
         log.error("Unable to get TWILIO secrets")
         return
 
-    schedule.every(1).minutes.do(
-        check_if_any_cancellation, secrets, facebook_page)
+    # Init database object
+    db = curly_db.initialize_database()
 
-    check_if_any_cancellation(secrets, facebook_page)
+    schedule.every(1).minutes.do(
+        check_if_any_cancellation, secrets, facebook_page, db)
+
+    check_if_any_cancellation(secrets, facebook_page, db)
 
     log.debug("Start the scheduler")
     while True:

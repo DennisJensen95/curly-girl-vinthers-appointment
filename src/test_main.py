@@ -1,5 +1,9 @@
+# Standard library
 import unittest
-from main import identify_cancellation
+from datetime import datetime, timedelta
+
+# Module being tested
+from main import identify_cancellation, is_post_too_old
 
 
 class TestMain(unittest.TestCase):
@@ -19,6 +23,12 @@ class TestMain(unittest.TestCase):
                     komme i gang 😍"""
         is_canellation_post = identify_cancellation(post_text)
         self.assertFalse(is_canellation_post)
+
+    def test_is_post_too_old(self):
+        now = datetime.now()
+        post_time = now - timedelta(minutes=5)
+        self.assertFalse(is_post_too_old(10, post_time))
+        self.assertTrue(is_post_too_old(3, post_time))
 
 
 if __name__ == '__main__':
