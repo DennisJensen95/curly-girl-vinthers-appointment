@@ -116,9 +116,9 @@ def check_if_any_cancellation(secrets: dict, facebook_page: str, db: pysondb.db.
     log.debug("Scrape the curly girl website")
     driver.get(facebook_page)
     driver.implicitly_wait(5)
-    sleep(3)
+    sleep(6)
     click_only_essential_cookies(driver)
-    sleep(2)
+    sleep(3)
     posts = extract_posts_from_page(driver)
     if check_if_any_post_is_cancellation(posts, db):
         log.info("Found a cancellation post - Notify the client")
