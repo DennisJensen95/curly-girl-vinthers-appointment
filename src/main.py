@@ -90,17 +90,17 @@ def is_post_too_old(min_old_threshold: int, post_time: datetime):
     return False
 
 
-def send_message_to_user(secrets: dict):
+def send_message_to_user(secrets: dict, receiver: str):
     account_sid = secrets["CURLY_TWILIO_ACCOUNT_SID"]
     auth_token = secrets["CURLY_TWILIO_AUTH_TOKEN"]
     from_number = secrets["TWILIO_FROM_NUMBER"]
-    to_number = secrets["ANNA_NUMBER"]
+    to_number = secrets[receiver]
+    print(secrets)
 
     client = Client(account_sid, auth_token)
 
-    message = client.messages \
-        .create(
-            body='Curly girl har et afbud! Skynd dig ind og book det.',
+    message = client.messages.create(
+            body='Curly girl har et afbud! Skynd dig ind og book det - https://www.facebook.com/Vinthersklippekaelder',
             from_=from_number,
             to=to_number
         )
@@ -115,14 +115,15 @@ def check_if_any_cancellation(secrets: dict, facebook_page: str, db: pysondb.db.
 
     log.debug("Scrape the curly girl website")
     driver.get(facebook_page)
-    driver.implicitly_wait(5)
-    sleep(6)
-    click_only_essential_cookies(driver)
+    driver.implicitly_wait(10)
     sleep(3)
+    click_only_essential_cookies(driver)
+    sleep(5)
     posts = extract_posts_from_page(driver)
     if check_if_any_post_is_cancellation(posts, db):
         log.info("Found a cancellation post - Notify the client")
-        send_message_to_user(secrets)
+        send_message_to_user(secrets, "ANNA_NUMBER")
+        send_message_to_user(secrets, "BETTINA_NUMBER")
     else:
         log.info("Did not find a cancellation post - Do not notify the client")
 
@@ -142,7 +143,7 @@ def main():
     # Init database object
     db = curly_db.initialize_database()
 
-    schedule.every(1).minutes.do(
+    schedule.every(5).seconds.do(
         check_if_any_cancellation, secrets, facebook_page, db)
 
     check_if_any_cancellation(secrets, facebook_page, db)
@@ -154,7 +155,6 @@ def main():
         except Exception as error:
             log.error(f"Error in the scheduler: {error}")
         sleep(1)
-
 
 if __name__ == "__main__":
     main()
