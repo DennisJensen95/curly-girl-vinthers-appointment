@@ -20,11 +20,15 @@ log = getLogger(__file__)
 
 def identify_cancellation(post_text: str):
     cancellation_keywords = ["afbud", "afbudstid"]
+    taken_words = ["taget", "booket", "booket tid"]
+    
     if any(keyword in post_text.lower() for keyword in cancellation_keywords):
+        if any(keyword in post_text.lower() for keyword in taken_words):
+            print("Cancellation already taken")
+            return False
         return True
-    else:
-        return False
-
+    
+    return False
 
 def check_if_any_post_is_cancellation(post_texts: list, db: pysondb.db.JsonDatabase):
     for post_text in post_texts:
